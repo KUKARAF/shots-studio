@@ -142,7 +142,8 @@ class HardDeleteService {
     }
 
     try {
-      final filePath = screenshot.path!; // Safe to use ! here since we checked above
+      final filePath =
+          screenshot.path!; // Safe to use ! here since we checked above
       final file = File(filePath);
 
       // Check if file exists before attempting deletion

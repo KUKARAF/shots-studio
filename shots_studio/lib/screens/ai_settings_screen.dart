@@ -122,7 +122,7 @@ class _AISettingsScreenState extends State<AISettingsScreen> {
         if (sourcePath == null) {
           throw Exception('Selected file path is null');
         }
-        
+
         final sourceFile = File(sourcePath);
 
         if (await sourceFile.exists()) {
@@ -487,7 +487,7 @@ class _AISettingsScreenState extends State<AISettingsScreen> {
       }
       return;
     }
-    
+
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
@@ -610,7 +610,8 @@ class _AISettingsScreenState extends State<AISettingsScreen> {
     String? disabledReason;
 
     if (provider == 'gemma') {
-      canToggle = _gemmaModelPath != null && _gemmaModelPath?.isNotEmpty == true;
+      canToggle =
+          _gemmaModelPath != null && _gemmaModelPath?.isNotEmpty == true;
       if (!canToggle) {
         forceDisabled = true;
         disabledReason = 'load the model file first';
