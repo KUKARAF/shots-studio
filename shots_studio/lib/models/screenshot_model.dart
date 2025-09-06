@@ -127,22 +127,58 @@ class Screenshot {
     DateTime? customAddedOn,
     int? knownFileSize,
   }) async {
-    final file = File(filePath);
+    try {
+      final file = File(filePath);
 
-    // Get file metadata
-    final fileSize = knownFileSize ?? await file.length();
-    final lastModified = customAddedOn ?? await file.lastModified();
-    final fileName = filePath.split('/').last;
+      // Check if file exists before accessing
+      if (!await file.exists()) {
+        throw FileSystemException('File does not exist', filePath);
+      }
 
-    return Screenshot(
-      id: id,
-      path: filePath,
-      title: customTitle ?? fileName,
-      tags: initialTags ?? [],
-      aiProcessed: aiProcessed,
-      addedOn: lastModified,
-      fileSize: fileSize,
-    );
+      // Get file metadata with error handling
+      int fileSize;
+      DateTime lastModified;
+
+      try {
+        fileSize = knownFileSize ?? await file.length();
+      } catch (e) {
+        print('Warning: Could not get file size for $filePath: $e');
+        fileSize = 0; // Default to 0 if we can't get the size
+      }
+
+      try {
+        lastModified = customAddedOn ?? await file.lastModified();
+      } catch (e) {
+        print('Warning: Could not get last modified date for $filePath: $e');
+        lastModified =
+            customAddedOn ?? DateTime.now(); // Use current time as fallback
+      }
+
+      final fileName = filePath.split('/').last;
+
+      return Screenshot(
+        id: id,
+        path: filePath,
+        title: customTitle ?? fileName,
+        tags: initialTags ?? [],
+        aiProcessed: aiProcessed,
+        addedOn: lastModified,
+        fileSize: fileSize,
+      );
+    } catch (e) {
+      print('Error creating screenshot from file path $filePath: $e');
+      // Still create the screenshot object but with minimal data
+      final fileName = filePath.split('/').last;
+      return Screenshot(
+        id: id,
+        path: filePath,
+        title: customTitle ?? fileName,
+        tags: initialTags ?? [],
+        aiProcessed: aiProcessed,
+        addedOn: customAddedOn ?? DateTime.now(),
+        fileSize: 0, // Set to 0 since we couldn't access the file
+      );
+    }
   }
 
   /// Factory method to create a Screenshot from image bytes (for web or picked images)
