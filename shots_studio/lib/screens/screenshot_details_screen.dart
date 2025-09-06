@@ -355,6 +355,10 @@ class _ScreenshotDetailScreenState extends State<ScreenshotDetailScreen> {
         }
         return;
       }
+
+      // Clear previous AI processed state and metadata before reprocessing
+      widget.screenshot.aiProcessed = false;
+      widget.screenshot.aiMetadata = null;
     }
 
     // Get settings from SharedPreferences
