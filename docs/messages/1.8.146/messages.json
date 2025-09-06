@@ -1,6 +1,22 @@
 {
   "messages": [
-    {
+      {
+        "show": true,
+        "id": "play_release_invite",
+        "title": "🚀 Join the Google Play Beta Release!",
+        "message": "Hey beta testers! 👋\n\nThe Play Store launch is just around the corner, but we need your help first. We're looking for at least 12 awesome people to test the Play Store version of Shots-Studio for 12 days.\nIf you’re up for it, please fill out the form below.\n\nAs a thank you, you’ll get the Play Store version of the app for free! 🎉",
+        "type": "info",
+        "priority": "high",
+        "show_once": true,
+        "valid_until": "2026-08-01T00:00:00Z",
+        "is_notification": false,
+        "version": "1.8.146",
+        "beta_only": true,
+        "action_text": "Opt-In",
+        "dismiss_text": "Maybe Later",
+        "action_url": "https://github.com/sponsors/AnsahMohammad"
+     },
+     {
       "show": true,
       "id": "try_features_1_8_146",
       "title": "🔥 Welcome to Shots Studio 1.8.146!",
