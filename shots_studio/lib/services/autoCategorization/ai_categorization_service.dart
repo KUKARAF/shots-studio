@@ -59,25 +59,23 @@ class AICategorizer {
 
     // Filter candidate screenshots based on whether this is a rescan or not
     final List<Screenshot> candidateScreenshots;
-    
+
     if (isRescan) {
       // For rescans, include all AI-processed, non-deleted screenshots
-      candidateScreenshots = allScreenshots
-          .where(
-            (s) => !s.isDeleted && s.aiProcessed,
-          )
-          .toList();
+      candidateScreenshots =
+          allScreenshots.where((s) => !s.isDeleted && s.aiProcessed).toList();
     } else {
       // For normal scans, exclude screenshots already in collection and already scanned
-      candidateScreenshots = allScreenshots
-          .where(
-            (s) =>
-                !currentScreenshotIds.contains(s.id) &&
-                !s.isDeleted &&
-                !currentCollection.scannedSet.contains(s.id) &&
-                s.aiProcessed,
-          )
-          .toList();
+      candidateScreenshots =
+          allScreenshots
+              .where(
+                (s) =>
+                    !currentScreenshotIds.contains(s.id) &&
+                    !s.isDeleted &&
+                    !currentCollection.scannedSet.contains(s.id) &&
+                    s.aiProcessed,
+              )
+              .toList();
     }
 
     _isRunning = true;
@@ -295,18 +293,14 @@ class AICategorizer {
                 size: 24,
               ),
               const SizedBox(width: 8),
-              const Expanded(
-                child: Text('All Screenshots Scanned'),
-              ),
+              const Expanded(child: Text('All Screenshots Scanned')),
             ],
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'All screenshots have been checked already.',
-              ),
+              const Text('All screenshots have been checked already.'),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(12),
