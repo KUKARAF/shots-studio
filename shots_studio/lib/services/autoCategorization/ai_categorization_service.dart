@@ -41,7 +41,8 @@ class AICategorizer {
 
     final prefs = await SharedPreferences.getInstance();
     final String? apiKey = prefs.getString('apiKey');
-    if (apiKey == null || apiKey.isEmpty) {
+    if ((apiKey == null || apiKey.isEmpty) &&
+        (prefs.getString('modelName') != 'gemma')) {
       SnackbarService().showError(
         context,
         'API key missing. Please add it in settings.',
@@ -125,7 +126,7 @@ class AICategorizer {
     }
 
     final config = AIConfig(
-      apiKey: apiKey,
+      apiKey: apiKey ?? '', // Handle null case for gemma model
       modelName: modelName,
       maxParallel: maxParallel,
       showMessage: ({

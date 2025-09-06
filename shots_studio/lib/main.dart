@@ -1726,9 +1726,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Future<void> _autoProcessWithGemini() async {
     // Only auto-process if enabled, we have an API key, we're not already processing,
     if (_autoProcessEnabled &&
-        _apiKey != null &&
-        _apiKey!.isNotEmpty &&
-        !_isProcessingAI) {
+            !_isProcessingAI &&
+            ((_apiKey != null && _apiKey!.isNotEmpty)) ||
+        (_selectedModelName == 'gemma')) {
       // Check if there are any unprocessed screenshots
       final unprocessedScreenshots =
           _activeScreenshots.where((s) => !s.aiProcessed).toList();
