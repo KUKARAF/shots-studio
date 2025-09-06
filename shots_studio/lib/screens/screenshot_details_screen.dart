@@ -88,15 +88,17 @@ class _ScreenshotDetailScreenState extends State<ScreenshotDetailScreen> {
   }
 
   void _checkExpiredReminders() {
-    if (widget.screenshot.reminderTime != null &&
-        widget.screenshot.reminderTime!.isBefore(DateTime.now())) {
+    final reminderTime = widget.screenshot.reminderTime;
+    if (reminderTime != null && reminderTime.isBefore(DateTime.now())) {
       // Clear expired reminder silently (no snackbar needed for expired reminders)
-      setState(() {
-        widget.screenshot.removeReminder();
-      });
-      // Cancel the notification without showing a snackbar
-      NotificationService().cancelNotification(widget.screenshot.id.hashCode);
-      _updateScreenshotDetails();
+      if (mounted) {
+        setState(() {
+          widget.screenshot.removeReminder();
+        });
+        // Cancel the notification without showing a snackbar
+        NotificationService().cancelNotification(widget.screenshot.id.hashCode);
+        _updateScreenshotDetails();
+      }
     }
   }
 
@@ -119,7 +121,9 @@ class _ScreenshotDetailScreenState extends State<ScreenshotDetailScreen> {
       _descriptionController.text = widget.screenshot.description ?? '';
 
       _checkExpiredReminders();
-      setState(() {});
+      if (mounted) {
+        setState(() {});
+      }
     }
   }
 
@@ -140,21 +144,25 @@ class _ScreenshotDetailScreenState extends State<ScreenshotDetailScreen> {
   }
 
   void _addTag(String tag) {
-    setState(() {
-      if (!_tags.contains(tag)) {
-        _tags.add(tag);
-        widget.screenshot.tags = _tags;
-        AnalyticsService().logFeatureUsed('tag_added');
-      }
-    });
+    if (mounted) {
+      setState(() {
+        if (!_tags.contains(tag)) {
+          _tags.add(tag);
+          widget.screenshot.tags = _tags;
+          AnalyticsService().logFeatureUsed('tag_added');
+        }
+      });
+    }
   }
 
   void _removeTag(String tag) {
-    setState(() {
-      _tags.remove(tag);
-      widget.screenshot.tags = _tags;
-      AnalyticsService().logFeatureUsed('tag_removed');
-    });
+    if (mounted) {
+      setState(() {
+        _tags.remove(tag);
+        widget.screenshot.tags = _tags;
+        AnalyticsService().logFeatureUsed('tag_removed');
+      });
+    }
   }
 
   Widget _buildTag(String label) {
@@ -209,7 +217,9 @@ class _ScreenshotDetailScreenState extends State<ScreenshotDetailScreen> {
       },
     ).then((_) {
       // Force refresh the main screen state when dialog closes
-      setState(() {});
+      if (mounted) {
+        setState(() {});
+      }
     });
   }
 
@@ -276,16 +286,20 @@ class _ScreenshotDetailScreenState extends State<ScreenshotDetailScreen> {
     // Call the update callback to persist changes
     widget.onUpdateCollection(updatedCollection);
     dialogSetState(() {});
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
     widget.onScreenshotUpdated?.call();
     _updateScreenshotDetails();
   }
 
   void _clearAndRequestAiReprocessing() {
     AnalyticsService().logFeatureUsed('ai_analysis_cleared');
-    setState(() {
-      widget.screenshot.aiProcessed = false;
-    });
+    if (mounted) {
+      setState(() {
+        widget.screenshot.aiProcessed = false;
+      });
+    }
     _updateScreenshotDetails();
 
     SnackbarService().showInfo(
@@ -382,9 +396,11 @@ class _ScreenshotDetailScreenState extends State<ScreenshotDetailScreen> {
 
     final String modelName = prefs.getString('modelName') ?? 'gemini-2.0-flash';
 
-    setState(() {
-      _isProcessingAI = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isProcessingAI = true;
+      });
+    }
 
     // Get list of collections that have auto-add enabled for auto-categorization
     final autoAddCollections =
@@ -434,20 +450,24 @@ class _ScreenshotDetailScreenState extends State<ScreenshotDetailScreen> {
               if (updatedScreenshots.isNotEmpty) {
                 final updatedScreenshot = updatedScreenshots.first;
 
-                setState(() {
-                  // Update the screenshot properties
-                  widget.screenshot.title = updatedScreenshot.title;
-                  widget.screenshot.description = updatedScreenshot.description;
-                  widget.screenshot.tags = updatedScreenshot.tags;
-                  widget.screenshot.links = updatedScreenshot.links;
-                  widget.screenshot.aiProcessed = updatedScreenshot.aiProcessed;
-                  widget.screenshot.aiMetadata = updatedScreenshot.aiMetadata;
+                if (mounted) {
+                  setState(() {
+                    // Update the screenshot properties
+                    widget.screenshot.title = updatedScreenshot.title;
+                    widget.screenshot.description =
+                        updatedScreenshot.description;
+                    widget.screenshot.tags = updatedScreenshot.tags;
+                    widget.screenshot.links = updatedScreenshot.links;
+                    widget.screenshot.aiProcessed =
+                        updatedScreenshot.aiProcessed;
+                    widget.screenshot.aiMetadata = updatedScreenshot.aiMetadata;
 
-                  // Update local state
-                  _tags = List.from(updatedScreenshot.tags);
-                  _descriptionController.text =
-                      updatedScreenshot.description ?? '';
-                });
+                    // Update local state
+                    _tags = List.from(updatedScreenshot.tags);
+                    _descriptionController.text =
+                        updatedScreenshot.description ?? '';
+                  });
+                }
 
                 // Handle auto-categorization
                 if (response['suggestedCollections'] != null) {
@@ -547,9 +567,11 @@ class _ScreenshotDetailScreenState extends State<ScreenshotDetailScreen> {
     } catch (e) {
       SnackbarService().showError(context, 'Error processing screenshot: $e');
     } finally {
-      setState(() {
-        _isProcessingAI = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isProcessingAI = false;
+        });
+      }
 
       try {
         await WakelockPlus.disable();
@@ -674,7 +696,7 @@ class _ScreenshotDetailScreenState extends State<ScreenshotDetailScreen> {
       // Navigation and success message
       if (widget.onNavigateAfterDelete != null) {
         widget.onNavigateAfterDelete!();
-      } else {
+      } else if (mounted) {
         Navigator.of(context).pop();
       }
 
@@ -885,8 +907,9 @@ class _ScreenshotDetailScreenState extends State<ScreenshotDetailScreen> {
   Widget _buildImageWidget(String imageName) {
     Widget imageWidget;
 
-    if (widget.screenshot.path != null) {
-      final file = File(widget.screenshot.path!);
+    final screenshotPath = widget.screenshot.path;
+    if (screenshotPath != null) {
+      final file = File(screenshotPath);
       if (file.existsSync()) {
         imageWidget = Image.file(
           file,
@@ -1370,25 +1393,29 @@ class _ScreenshotDetailScreenState extends State<ScreenshotDetailScreen> {
                   // If we received an 'expired' flag, it means the bottom sheet detected
                   // an expired reminder and already closed itself
                   if (result['expired'] == true) {
-                    setState(() {
-                      widget.screenshot.removeReminder();
-                    });
+                    if (mounted) {
+                      setState(() {
+                        widget.screenshot.removeReminder();
+                      });
+                    }
                     ReminderUtils.clearReminder(context, widget.screenshot);
                     // SnackbarService().showInfo(
                     //   context,
                     //   'Expired reminder has been cleared',
                     // );
                   } else {
-                    setState(() {
-                      if (result['reminderTime'] != null) {
-                        widget.screenshot.setReminder(
-                          result['reminderTime'],
-                          text: result['reminderText'],
-                        );
-                      } else {
-                        widget.screenshot.removeReminder();
-                      }
-                    });
+                    if (mounted) {
+                      setState(() {
+                        if (result['reminderTime'] != null) {
+                          widget.screenshot.setReminder(
+                            result['reminderTime'],
+                            text: result['reminderText'],
+                          );
+                        } else {
+                          widget.screenshot.removeReminder();
+                        }
+                      });
+                    }
 
                     if (result['reminderTime'] != null) {
                       AnalyticsService().logFeatureUsed('reminder_set');
@@ -1564,9 +1591,11 @@ class _ScreenshotDetailScreenState extends State<ScreenshotDetailScreen> {
       print('Failed to enable wakelock: $e');
     }
 
-    setState(() {
-      _isProcessingOCR = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isProcessingOCR = true;
+      });
+    }
 
     try {
       // Show processing message
@@ -1595,9 +1624,11 @@ class _ScreenshotDetailScreenState extends State<ScreenshotDetailScreen> {
         'Error processing image: ${e.toString()}',
       );
     } finally {
-      setState(() {
-        _isProcessingOCR = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isProcessingOCR = false;
+        });
+      }
 
       // Disable wakelock when processing is complete
       try {
