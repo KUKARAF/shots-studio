@@ -128,7 +128,7 @@ class HardDeleteService {
     }
 
     // Check if screenshot has a valid file path
-    if (screenshot.path == null || screenshot.path!.isEmpty) {
+    if (screenshot.path == null || screenshot.path?.isEmpty == true) {
       if (_kDebugMode) {
         print(
           'HardDeleteService: Screenshot has no file path, cannot hard delete',
@@ -142,7 +142,8 @@ class HardDeleteService {
     }
 
     try {
-      final file = File(screenshot.path!);
+      final filePath = screenshot.path!; // Safe to use ! here since we checked above
+      final file = File(filePath);
 
       // Check if file exists before attempting deletion
       final bool fileExisted = await file.exists();

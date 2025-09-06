@@ -118,7 +118,11 @@ class _AISettingsScreenState extends State<AISettingsScreen> {
       );
 
       if (result != null && result.files.single.path != null) {
-        final sourcePath = result.files.single.path!;
+        final sourcePath = result.files.single.path;
+        if (sourcePath == null) {
+          throw Exception('Selected file path is null');
+        }
+        
         final sourceFile = File(sourcePath);
 
         if (await sourceFile.exists()) {
@@ -162,6 +166,8 @@ class _AISettingsScreenState extends State<AISettingsScreen> {
           } else {
             throw Exception('Failed to copy model file to permanent location');
           }
+        } else {
+          throw Exception('Selected file does not exist');
         }
       }
     } catch (e) {
@@ -468,7 +474,20 @@ class _AISettingsScreenState extends State<AISettingsScreen> {
   }
 
   Future<void> _showGemmaWarningDialog(String provider) async {
-    final localizations = AppLocalizations.of(context)!;
+    final localizations = AppLocalizations.of(context);
+    if (localizations == null) {
+      // Fallback if localizations are not available
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Cannot show dialog - localization not available'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+    
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
@@ -535,7 +554,7 @@ class _AISettingsScreenState extends State<AISettingsScreen> {
     // For Gemma provider, check if model file is available before enabling
     if (provider == 'gemma' &&
         enabled &&
-        (_gemmaModelPath == null || _gemmaModelPath!.isEmpty)) {
+        (_gemmaModelPath == null || _gemmaModelPath?.isEmpty == true)) {
       // Show a message that model file is required
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -591,7 +610,7 @@ class _AISettingsScreenState extends State<AISettingsScreen> {
     String? disabledReason;
 
     if (provider == 'gemma') {
-      canToggle = _gemmaModelPath != null && _gemmaModelPath!.isNotEmpty;
+      canToggle = _gemmaModelPath != null && _gemmaModelPath?.isNotEmpty == true;
       if (!canToggle) {
         forceDisabled = true;
         disabledReason = 'load the model file first';
@@ -976,7 +995,7 @@ class _AISettingsScreenState extends State<AISettingsScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _gemmaModelPath!.split('/').last,
+                      _gemmaModelPath?.split('/').last ?? 'No model selected',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,

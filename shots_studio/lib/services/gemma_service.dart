@@ -395,7 +395,7 @@ class GemmaService {
   // Get model name from current path
   String? get modelName {
     if (_currentModelPath != null) {
-      return _currentModelPath!.split('/').last;
+      return _currentModelPath?.split('/').last;
     }
     return null;
   }
