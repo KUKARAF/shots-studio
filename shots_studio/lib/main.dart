@@ -1099,7 +1099,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       );
       final success = await backgroundService.startBackgroundProcessing(
         screenshots: unprocessedScreenshots,
-        apiKey: _apiKey!,
+        apiKey: _apiKey ?? '',
         modelName: _selectedModelName,
         maxParallel: _maxParallelAI,
         autoAddCollections: autoAddCollections,
