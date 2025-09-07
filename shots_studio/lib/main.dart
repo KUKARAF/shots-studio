@@ -38,6 +38,7 @@ import 'package:shots_studio/services/image_loader_service.dart';
 import 'package:shots_studio/services/custom_path_service.dart';
 import 'package:shots_studio/widgets/custom_paths_dialog.dart';
 import 'package:shots_studio/utils/build_source.dart';
+import 'package:shots_studio/utils/display_utils.dart';
 
 void main() async {
   await SentryFlutter.init(
@@ -50,6 +51,9 @@ void main() async {
     },
     appRunner: () async {
       WidgetsFlutterBinding.ensureInitialized();
+
+      // Initialize display refresh rate detection and optimization
+      await DisplayUtils.initializeHighRefreshRate();
 
       // Initialize Analytics (PostHog)
       await AnalyticsService().initialize();
