@@ -600,6 +600,316 @@ class _AISettingsScreenState extends State<AISettingsScreen> {
     }
   }
 
+  Future<void> _showModelSelectionGuide() async {
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        final theme = Theme.of(context);
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(
+                Icons.lightbulb_outline,
+                color: theme.colorScheme.primary,
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'How to choose the right model ?',
+                  softWrap: true,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          content: Container(
+            width: double.maxFinite,
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.9,
+              maxHeight: MediaQuery.of(context).size.height * 0.7,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Choose the right AI model based on your needs:',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Gemini 2.0 Flash
+                  _buildModelCard(
+                    theme: theme,
+                    modelName: 'Gemini 2.0 Flash',
+                    description: '2.0 model, least expensive',
+                    icon: Icons.flash_on,
+                    iconColor: Colors.yellow,
+                    useCases: [
+                      'Basic screenshot analysis',
+                      'Limited daily processing',
+                      'Cost-conscious users',
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Gemini 2.5 Flash Lite
+                  _buildModelCard(
+                    theme: theme,
+                    modelName: 'Gemini 2.5 Flash Lite',
+                    description: 'Better than 2.0 and cost effective',
+                    icon: Icons.flash_auto,
+                    iconColor: Colors.orange,
+                    useCases: [
+                      'Lots of images without hitting free quota',
+                      'Good balance of quality and cost',
+                      'Regular daily usage',
+                    ],
+                    recommended: true,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Gemini 2.5 Flash
+                  _buildModelCard(
+                    theme: theme,
+                    modelName: 'Gemini 2.5 Flash',
+                    description: 'High quality analysis with fast processing',
+                    icon: Icons.flash_on,
+                    iconColor: Colors.blue,
+                    useCases: [
+                      'High volume processing',
+                      'Better accuracy for complex screenshots',
+                      'Professional use cases',
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Gemini 2.5 Pro
+                  _buildModelCard(
+                    theme: theme,
+                    modelName: 'Gemini 2.5 Pro',
+                    description: 'Premium model with highest accuracy',
+                    icon: Icons.star,
+                    iconColor: Colors.purple,
+                    useCases: [
+                      'Maximum accuracy needed',
+                      'Complex screenshot analysis',
+                      'Professional/enterprise use',
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Gemma (Local)
+                  _buildModelCard(
+                    theme: theme,
+                    modelName: 'Gemma (Local)',
+                    description: 'Offline processing, completely private',
+                    icon: Icons.security,
+                    iconColor: Colors.green,
+                    useCases: [
+                      'Complete privacy (no data sent online)',
+                      'Works without internet connection',
+                      'Takes more time to process',
+                      'No API costs',
+                    ],
+                    isLocal: true,
+                  ),
+
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer.withOpacity(
+                        0.3,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          color: theme.colorScheme.primary,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'You can change models anytime in the main settings.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: theme.colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Got it'),
+            ),
+          ],
+        );
+      },
+    );
+
+    // Track analytics for model guide usage
+    AnalyticsService().logFeatureUsed('model_selection_guide_viewed');
+  }
+
+  Widget _buildModelCard({
+    required ThemeData theme,
+    required String modelName,
+    required String description,
+    required IconData icon,
+    required Color iconColor,
+    required List<String> useCases,
+    bool recommended = false,
+    bool isLocal = false,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color:
+              recommended
+                  ? theme.colorScheme.primary.withOpacity(0.5)
+                  : theme.colorScheme.outline.withOpacity(0.3),
+          width: recommended ? 2 : 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: iconColor, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  modelName,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                  softWrap: true,
+                  maxLines: 2,
+                ),
+              ),
+              if (recommended) ...[
+                const SizedBox(width: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    'RECOMMENDED',
+                    style: TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onPrimary,
+                    ),
+                  ),
+                ),
+              ],
+              if (isLocal) ...[
+                const SizedBox(width: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Text(
+                    'OFFLINE',
+                    style: TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            description,
+            style: TextStyle(
+              fontSize: 12,
+              color: theme.colorScheme.onSurfaceVariant,
+              fontStyle: FontStyle.italic,
+            ),
+            softWrap: true,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Best for:',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 4),
+          ...useCases.map(
+            (useCase) => Padding(
+              padding: const EdgeInsets.only(left: 8, bottom: 2),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '• ',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      useCase,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      softWrap: true,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildProviderToggle(String provider, ThemeData theme) {
     final isEnabled = _providerStates[provider] ?? false;
     final models = AIProviderConfig.getModelsForProvider(provider);
@@ -1469,6 +1779,29 @@ class _AISettingsScreenState extends State<AISettingsScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: _showModelSelectionGuide,
+                    icon: Icon(
+                      Icons.help_outline,
+                      size: 16,
+                      color: theme.colorScheme.primary,
+                    ),
+                    label: Text(
+                      'How to choose the right model',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: theme.colorScheme.primary),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                     ),
                   ),
                 ],

@@ -394,7 +394,8 @@ class _ScreenshotDetailScreenState extends State<ScreenshotDetailScreen> {
       return;
     }
 
-    final String modelName = prefs.getString('modelName') ?? 'gemini-2.0-flash';
+    final String modelName =
+        prefs.getString('modelName') ?? 'gemini-2.5-flash-lite';
 
     if (mounted) {
       setState(() {

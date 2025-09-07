@@ -50,7 +50,8 @@ class AICategorizer {
       return AICategorizeResult(success: false, error: 'API key not set');
     }
 
-    final String modelName = prefs.getString('modelName') ?? 'gemini-2.0-flash';
+    final String modelName =
+        prefs.getString('modelName') ?? 'gemini-2.5-flash-lite';
     final int maxParallel = AIProviderConfig.getMaxCategorizationLimitForModel(
       modelName,
     );

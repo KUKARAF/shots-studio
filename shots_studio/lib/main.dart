@@ -258,7 +258,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int _totalToLoad = 0;
 
   String? _apiKey;
-  String _selectedModelName = 'gemini-2.0-flash';
+  String _selectedModelName = 'gemini-2.5-flash-lite';
   int _screenshotLimit = 1200;
   int _maxParallelAI = 4;
   bool _devMode = false;
@@ -659,7 +659,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _apiKey = prefs.getString('apiKey');
-      _selectedModelName = prefs.getString('modelName') ?? 'gemini-2.0-flash';
+      _selectedModelName =
+          prefs.getString('modelName') ?? 'gemini-2.5-flash-lite';
       _screenshotLimit = prefs.getInt('limit') ?? 1200;
       _maxParallelAI = prefs.getInt('maxParallel') ?? 4;
       _devMode = prefs.getBool('dev_mode') ?? false;

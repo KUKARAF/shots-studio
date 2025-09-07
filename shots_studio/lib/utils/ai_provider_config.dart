@@ -1,7 +1,12 @@
 class AIProviderConfig {
   // Available models for each provider
   static const Map<String, List<String>> providerModels = {
-    'gemini': ['gemini-2.0-flash', 'gemini-2.5-pro'],
+    'gemini': [
+      'gemini-2.0-flash',
+      'gemini-2.5-flash-lite',
+      'gemini-2.5-flash',
+      'gemini-2.5-pro',
+    ],
     'gemma': ['gemma'],
     'none': ['No AI Model'],
   };
@@ -9,13 +14,17 @@ class AIProviderConfig {
   // Model-specific maxParallel limits
   static const Map<String, int> modelMaxParallelLimits = {
     'gemini-2.0-flash': 16,
-    'gemini-2.5-pro': 16,
+    'gemini-2.5-flash': 16,
+    'gemini-2.5-flash-lite': 16,
+    'gemini-2.5-pro': 32,
     'gemma': 1,
   };
 
   // Model-specific max categorization limits (for batch processing text analysis)
   static const Map<String, int> modelMaxCategorizationLimits = {
     'gemini-2.0-flash': 50,
+    'gemini-2.5-flash': 50,
+    'gemini-2.5-flash-lite': 50,
     'gemini-2.5-pro': 50,
     'gemma': 10,
   };
