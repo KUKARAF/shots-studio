@@ -190,6 +190,51 @@ class _AdvancedSettingsSectionState extends State<AdvancedSettingsSection> {
                   ),
                 ),
               ),
+              IconButton(
+                icon: Icon(
+                  Icons.help_outline,
+                  size: 16,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder:
+                        (context) => AlertDialog(
+                          title: Text(
+                            'Max Parallel AI Processes',
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface,
+                            ),
+                          ),
+                          content: Text(
+                            'Controls the maximum number of images sent in one AI request.\n\n'
+                            '• Default: 4 (recommended for most users)\n'
+                            '• Maximum: 8 (recommended for faster processing)\n'
+                            '• Higher values require more internet bandwidth\n'
+                            '• Gemma AI only supports 1 image regardless of this setting\n'
+                            '• Adjust based on your internet connection speed',
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: Text(
+                                'Got it',
+                                style: TextStyle(
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                  );
+                },
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -211,7 +256,8 @@ class _AdvancedSettingsSectionState extends State<AdvancedSettingsSection> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Controls the maximum number of images sent in one AI request. Default is 4.',
+                'Controls parallel image processing. Higher values need more bandwidth. '
+                'Default: 4. \nNote: Gemma only supports 1 image.',
                 style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
               ),
               const SizedBox(height: 8),
