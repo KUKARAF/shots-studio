@@ -189,7 +189,7 @@ class _AppDrawerState extends State<AppDrawer> {
                 ),
               ),
               subtitle: Text(
-                'Manage app preferences and AI settings',
+                'Manage app preferences and settings',
                 style: TextStyle(
                   color: theme.colorScheme.onSurfaceVariant,
                   fontSize: 13,
