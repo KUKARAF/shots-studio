@@ -172,41 +172,24 @@ class ImageLoaderService {
       List<FileSystemEntity> allFiles = [];
 
       for (String dirPath in possibleScreenshotPaths) {
-        try {
-          final directory = Directory(dirPath);
-          if (await directory.exists()) {
-            try {
-              final files = directory.listSync().whereType<File>().where(
-                (file) =>
-                    file.path.toLowerCase().endsWith('.png') ||
-                    file.path.toLowerCase().endsWith('.jpg') ||
-                    file.path.toLowerCase().endsWith('.jpeg'),
-              );
-              allFiles.addAll(files);
-            } catch (e) {
-              print('Error reading directory $dirPath: $e');
-              // Continue with other directories even if one fails
-              continue;
-            }
-          }
-        } catch (e) {
-          print('Error accessing directory $dirPath: $e');
-          // Continue with other directories even if one fails
-          continue;
+        final directory = Directory(dirPath);
+        if (await directory.exists()) {
+          allFiles.addAll(
+            directory.listSync().whereType<File>().where(
+              (file) =>
+                  file.path.toLowerCase().endsWith('.png') ||
+                  file.path.toLowerCase().endsWith('.jpg') ||
+                  file.path.toLowerCase().endsWith('.jpeg'),
+            ),
+          );
         }
       }
 
-      // Sort by last modified date (newest first) with error handling
+      // Sort by last modified date (newest first)
       allFiles.sort((a, b) {
-        try {
-          final aModified = File(a.path).lastModifiedSync();
-          final bModified = File(b.path).lastModifiedSync();
-          return bModified.compareTo(aModified);
-        } catch (e) {
-          print('Error comparing file modification dates: $e');
-          // If we can't compare modification dates, just use path comparison
-          return b.path.compareTo(a.path);
-        }
+        return File(
+          b.path,
+        ).lastModifiedSync().compareTo(File(a.path).lastModifiedSync());
       });
 
       // Apply limit if enabled
@@ -224,71 +207,45 @@ class ImageLoaderService {
         final batch = limitedFiles.skip(i).take(batchSize);
 
         for (var fileEntity in batch) {
-          try {
-            final file = File(fileEntity.path);
+          final file = File(fileEntity.path);
 
-            // Skip if already exists by path
-            if (existingScreenshots.any((s) => s.path == file.path)) {
-              print(
-                'Skipping already loaded file via path check: ${file.path}',
-              );
-              progress++;
-              onProgress?.call(progress, limitedFiles.length);
-              continue;
-            }
-
-            // Check if the file is in trash and skip if it is
-            if (FileWatcherService.isFileInTrash(file.path)) {
-              print('Skipping trashed file: ${file.path}');
-              progress++;
-              onProgress?.call(progress, limitedFiles.length);
-              continue;
-            }
-
-            // Check if file still exists (important after device restart)
-            if (!await file.exists()) {
-              print('Skipping non-existent file: ${file.path}');
-              progress++;
-              onProgress?.call(progress, limitedFiles.length);
-              continue;
-            }
-
-            int fileSize;
-            try {
-              fileSize = await file.length();
-            } catch (e) {
-              print('Error getting file size for ${file.path}: $e');
-              progress++;
-              onProgress?.call(progress, limitedFiles.length);
-              continue;
-            }
-
-            // Skip very large files to prevent memory issues
-            if (fileSize > 50 * 1024 * 1024) {
-              // Skip files larger than 50MB
-              print('Skipping large file: ${file.path} ($fileSize bytes)');
-              progress++;
-              onProgress?.call(progress, limitedFiles.length);
-              continue;
-            }
-
-            final screenshot = await Screenshot.fromFilePath(
-              id: _uuid.v4(),
-              filePath: file.path,
-              knownFileSize: fileSize,
-            );
-
-            loadedScreenshots.add(screenshot);
-
+          // Skip if already exists by path
+          if (existingScreenshots.any((s) => s.path == file.path)) {
+            print('Skipping already loaded file via path check: ${file.path}');
             progress++;
             onProgress?.call(progress, limitedFiles.length);
-          } catch (e) {
-            print('Error processing file ${fileEntity.path}: $e');
-            progress++;
-            onProgress?.call(progress, limitedFiles.length);
-            // Continue processing other files even if one fails
             continue;
           }
+
+          // Check if the file is in trash and skip if it is
+          if (FileWatcherService.isFileInTrash(file.path)) {
+            print('Skipping trashed file: ${file.path}');
+            progress++;
+            onProgress?.call(progress, limitedFiles.length);
+            continue;
+          }
+
+          final fileSize = await file.length();
+
+          // Skip very large files to prevent memory issues
+          if (fileSize > 50 * 1024 * 1024) {
+            // Skip files larger than 50MB
+            print('Skipping large file: ${file.path} ($fileSize bytes)');
+            progress++;
+            onProgress?.call(progress, limitedFiles.length);
+            continue;
+          }
+
+          final screenshot = await Screenshot.fromFilePath(
+            id: _uuid.v4(),
+            filePath: file.path,
+            knownFileSize: fileSize,
+          );
+
+          loadedScreenshots.add(screenshot);
+
+          progress++;
+          onProgress?.call(progress, limitedFiles.length);
         }
 
         // Small delay to prevent UI blocking

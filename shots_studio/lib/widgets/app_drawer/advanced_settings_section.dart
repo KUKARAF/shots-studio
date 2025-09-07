@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shots_studio/services/analytics/analytics_service.dart';
 import 'package:shots_studio/services/corrupt_file_service.dart';
-import 'package:shots_studio/services/crash_recovery_service.dart';
 import 'package:shots_studio/models/screenshot_model.dart';
 // import 'package:shots_studio/screens/debug_notifications_screen.dart'; // Uncomment for debugging
 import '../../l10n/app_localizations.dart';
@@ -411,74 +410,6 @@ class _AdvancedSettingsSectionState extends State<AdvancedSettingsSection> {
             ),
           ),
         ),
-
-        // App Diagnostics Button (only in debug mode)
-        if (kDebugMode)
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 4.0,
-            ),
-            child: SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () async {
-                  try {
-                    final report =
-                        await CrashRecoveryService.createDiagnosticReport();
-                    if (context.mounted) {
-                      showDialog(
-                        context: context,
-                        builder:
-                            (context) => AlertDialog(
-                              title: const Text('App Diagnostics'),
-                              content: SingleChildScrollView(
-                                child: SelectableText(
-                                  report,
-                                  style: const TextStyle(
-                                    fontFamily: 'monospace',
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.of(context).pop(),
-                                  child: const Text('Close'),
-                                ),
-                              ],
-                            ),
-                      );
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Failed to generate diagnostics: $e'),
-                        ),
-                      );
-                    }
-                  }
-                },
-                icon: Icon(
-                  Icons.health_and_safety,
-                  color: theme.colorScheme.primary,
-                ),
-                label: Text(
-                  'App Diagnostics',
-                  style: TextStyle(color: theme.colorScheme.primary),
-                ),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: theme.colorScheme.primary),
-                  padding: const EdgeInsets.symmetric(vertical: 12.0),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
         // Debug Notifications Button (only in debug mode)
         // Temporarily commented out - uncomment for debugging notification issues
         // if (kDebugMode)

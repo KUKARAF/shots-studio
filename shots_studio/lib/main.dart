@@ -26,7 +26,6 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:shots_studio/widgets/ai_processing_container.dart';
 import 'package:shots_studio/services/background_service.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
-import 'package:shots_studio/services/crash_recovery_service.dart';
 import 'package:shots_studio/services/analytics/analytics_service.dart';
 import 'package:shots_studio/services/file_watcher_service.dart';
 import 'package:shots_studio/services/update_checker_service.dart';
@@ -50,163 +49,75 @@ void main() async {
           kDebugMode ? 0 : 0.1; // 30% in debug, 10% in production
     },
     appRunner: () async {
-      try {
-        WidgetsFlutterBinding.ensureInitialized();
+      WidgetsFlutterBinding.ensureInitialized();
 
-        // Initialize crash recovery system first
-        await CrashRecoveryService.initializeRecovery();
+      // Initialize Analytics (PostHog)
+      await AnalyticsService().initialize();
 
-        // Set up global error handling
-        FlutterError.onError = (FlutterErrorDetails details) {
-          print('Flutter Error: ${details.exception}');
-          print('Stack Trace: ${details.stack}');
-          // Continue execution - don't crash the app for UI errors
-        };
+      // Optimize image cache for better memory management
+      MemoryUtils.optimizeImageCache();
 
-        // Initialize Analytics (PostHog) with error handling
-        try {
-          await AnalyticsService().initialize();
-        } catch (e) {
-          print('Analytics initialization failed: $e');
-          // Continue without analytics - not critical for app function
-        }
+      await NotificationService().init();
 
-        // Optimize image cache for better memory management
-        try {
-          MemoryUtils.optimizeImageCache();
-        } catch (e) {
-          print('Image cache optimization failed: $e');
-          // Continue - not critical for app function
-        }
-
-        // Initialize notification service with error handling
-        try {
-          await NotificationService().init();
-        } catch (e) {
-          print('Notification service initialization failed: $e');
-          // Continue without notifications - not critical for app function
-        }
-
-        // Initialize background service for AI processing only on non-web platforms
-        if (!kIsWeb) {
-          try {
-            print("Main: Initial background service setup");
-            // Set up notification channel for background service
-            await _setupBackgroundServiceNotificationChannel();
-            // Don't initialize service at app startup - we'll do it when needed
-          } catch (e) {
-            print('Background service setup failed: $e');
-            // Continue without background service - not critical for app startup
-          }
-        }
-
-        runApp(SentryWidget(child: const MyApp()));
-      } catch (e, stackTrace) {
-        print('Critical error during app initialization: $e');
-        print('Stack trace: $stackTrace');
-
-        // Try to run a minimal version of the app
-        runApp(
-          MaterialApp(
-            home: Scaffold(
-              body: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error, size: 64, color: Colors.red),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'App initialization failed',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text('Please restart the app'),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        // Try to restart the app
-                        main();
-                      },
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
+      // Initialize background service for AI processing only on non-web platforms
+      if (!kIsWeb) {
+        print("Main: Initial background service setup");
+        // Set up notification channel for background service
+        await _setupBackgroundServiceNotificationChannel();
+        // Don't initialize service at app startup - we'll do it when needed
       }
+
+      runApp(SentryWidget(child: const MyApp()));
     },
   );
 }
 
 // Set up notification channel for background service
 Future<void> _setupBackgroundServiceNotificationChannel() async {
-  try {
-    const AndroidNotificationChannel
-    aiProcessingChannel = AndroidNotificationChannel(
-      'ai_processing_channel', // id - matches BackgroundProcessingService.notificationChannelId
-      'AI Processing Service',
-      description: 'Channel for AI screenshot processing notifications',
-      importance: Importance.low,
-    );
+  const AndroidNotificationChannel
+  aiProcessingChannel = AndroidNotificationChannel(
+    'ai_processing_channel', // id - matches BackgroundProcessingService.notificationChannelId
+    'AI Processing Service',
+    description: 'Channel for AI screenshot processing notifications',
+    importance: Importance.low,
+  );
 
-    const AndroidNotificationChannel serverMessagesChannel =
-        AndroidNotificationChannel(
-          'server_messages_channel',
-          'Server Messages',
-          description: 'Channel for server messages and announcements',
-          importance: Importance.high,
-        );
+  const AndroidNotificationChannel serverMessagesChannel =
+      AndroidNotificationChannel(
+        'server_messages_channel',
+        'Server Messages',
+        description: 'Channel for server messages and announcements',
+        importance: Importance.high,
+      );
 
-    const AndroidNotificationChannel urgentServerMessagesChannel =
-        AndroidNotificationChannel(
-          'server_messages_urgent',
-          'Urgent Server Messages',
-          description: 'Channel for urgent server messages',
-          importance: Importance.max,
-        );
+  const AndroidNotificationChannel urgentServerMessagesChannel =
+      AndroidNotificationChannel(
+        'server_messages_urgent',
+        'Urgent Server Messages',
+        description: 'Channel for urgent server messages',
+        importance: Importance.max,
+      );
 
-    final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-        FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
-    // Try to create notification channels with individual error handling
-    try {
-      await flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin
-          >()
-          ?.createNotificationChannel(aiProcessingChannel);
-    } catch (e) {
-      print('Failed to create AI processing channel: $e');
-    }
+  await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin
+      >()
+      ?.createNotificationChannel(aiProcessingChannel);
 
-    try {
-      await flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin
-          >()
-          ?.createNotificationChannel(serverMessagesChannel);
-    } catch (e) {
-      print('Failed to create server messages channel: $e');
-    }
+  await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin
+      >()
+      ?.createNotificationChannel(serverMessagesChannel);
 
-    try {
-      await flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin
-          >()
-          ?.createNotificationChannel(urgentServerMessagesChannel);
-    } catch (e) {
-      print('Failed to create urgent server messages channel: $e');
-    }
-  } catch (e) {
-    print('Failed to setup notification channels: $e');
-    // Don't rethrow - allow app to continue without notification channels
-  }
+  await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin
+      >()
+      ?.createNotificationChannel(urgentServerMessagesChannel);
 }
 
 class MyApp extends StatefulWidget {
@@ -372,94 +283,44 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    // Wrap initialization in error handling to prevent crashes
-    _initializeAppSafely();
-  }
+    // Log analytics for app startup and home screen view
+    AnalyticsService().logScreenView('home_screen');
+    AnalyticsService().logCurrentUsageTime();
 
-  Future<void> _initializeAppSafely() async {
-    try {
-      // Log analytics for app startup and home screen view
-      try {
-        AnalyticsService().logScreenView('home_screen');
-        AnalyticsService().logCurrentUsageTime();
-      } catch (e) {
-        print('Analytics logging failed during startup: $e');
-      }
+    _loadDataFromPrefs();
+    _loadSettings();
 
-      // Load data with error handling
-      try {
-        await _loadDataFromPrefs();
-      } catch (e) {
-        print('Failed to load data from preferences: $e');
-      }
-
-      try {
-        await _loadSettings();
-      } catch (e) {
-        print('Failed to load settings: $e');
-      }
-
-      // Initialize server message checking in background
-      if (!kIsWeb) {
-        try {
-          _initializeServerMessageChecking();
-        } catch (e) {
-          print('Failed to initialize server message checking: $e');
-        }
-      }
-
-      if (!kIsWeb) {
-        try {
-          _loadAndroidScreenshotsIfNeeded()
-              .then((_) {
-                // Setup FileWatcher only AFTER initial loading is complete
-                // This ensures no duplicates from initial scan
-                try {
-                  _setupFileWatcher();
-                } catch (e) {
-                  print('Failed to setup file watcher: $e');
-                }
-              })
-              .catchError((e) {
-                print('Failed to load Android screenshots: $e');
-              });
-
-          try {
-            _setupBackgroundServiceListeners();
-          } catch (e) {
-            print('Failed to setup background service listeners: $e');
-          }
-        } catch (e) {
-          print('Failed to initialize Android-specific features: $e');
-        }
-      }
-
-      // Show privacy dialog after the first frame
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        try {
-          // Show privacy dialog and only proceed to API key guide if accepted
-          bool privacyAccepted = await showPrivacyScreenIfNeeded(context);
-          if (privacyAccepted && context.mounted) {
-            // Log install info when onboarding is completed
-            AnalyticsService().logInstallInfo();
-            // Log install source analytics
-            AnalyticsService().logInstallSource(BuildSource.current.value);
-
-            // API key guide will only show after privacy is accepted
-            await showApiKeyGuideIfNeeded(context, _apiKey, _updateApiKey);
-
-            _checkForUpdates();
-            _checkForServerMessages();
-            _autoProcessWithGemini();
-          }
-        } catch (e) {
-          print('Failed to show privacy/onboarding dialogs: $e');
-        }
-      });
-    } catch (e) {
-      print('Critical error during app initialization: $e');
-      // Continue with minimal functionality
+    // Initialize server message checking in background
+    if (!kIsWeb) {
+      _initializeServerMessageChecking();
     }
+
+    if (!kIsWeb) {
+      _loadAndroidScreenshotsIfNeeded().then((_) {
+        // Setup FileWatcher only AFTER initial loading is complete
+        // This ensures no duplicates from initial scan
+        _setupFileWatcher();
+      });
+      _setupBackgroundServiceListeners();
+    }
+    // Show privacy dialog after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Show privacy dialog and only proceed to API key guide if accepted
+      bool privacyAccepted = await showPrivacyScreenIfNeeded(context);
+      if (privacyAccepted && context.mounted) {
+        // Log install info when onboarding is completed
+        AnalyticsService().logInstallInfo();
+        // Log install source analytics
+        AnalyticsService().logInstallSource(BuildSource.current.value);
+
+        // API key guide will only show after privacy is accepted
+        await showApiKeyGuideIfNeeded(context, _apiKey, _updateApiKey);
+
+        _checkForUpdates();
+        _checkForServerMessages();
+        _autoProcessWithGemini();
+      }
+    });
   }
 
   @override
@@ -468,10 +329,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     // Clean up file watcher
     _fileWatcherSubscription?.cancel();
-
-    // Mark clean shutdown for crash recovery
-    CrashRecoveryService.markCleanShutdown();
-
     super.dispose();
   }
 
@@ -768,97 +625,51 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _loadDataFromPrefs() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
+    final prefs = await SharedPreferences.getInstance();
 
-      try {
-        final String? storedScreenshots = prefs.getString('screenshots');
-        if (storedScreenshots != null && storedScreenshots.isNotEmpty) {
-          final List<dynamic> decodedScreenshots = jsonDecode(
-            storedScreenshots,
-          );
-          setState(() {
-            _screenshots.clear();
-            _screenshots.addAll(
-              decodedScreenshots.map(
-                (json) => Screenshot.fromJson(json as Map<String, dynamic>),
-              ),
-            );
-          });
-        }
-      } catch (e) {
-        print('Failed to load screenshots from SharedPreferences: $e');
-        // Clear corrupted data and continue
-        try {
-          await prefs.remove('screenshots');
-        } catch (removeError) {
-          print('Failed to remove corrupted screenshots data: $removeError');
-        }
-      }
-
-      try {
-        final String? storedCollections = prefs.getString('collections');
-        if (storedCollections != null && storedCollections.isNotEmpty) {
-          final List<dynamic> decodedCollections = jsonDecode(
-            storedCollections,
-          );
-          setState(() {
-            _collections.clear();
-            _collections.addAll(
-              decodedCollections.map(
-                (json) => Collection.fromJson(json as Map<String, dynamic>),
-              ),
-            );
-          });
-        }
-      } catch (e) {
-        print('Failed to load collections from SharedPreferences: $e');
-        // Clear corrupted data and continue
-        try {
-          await prefs.remove('collections');
-        } catch (removeError) {
-          print('Failed to remove corrupted collections data: $removeError');
-        }
-      }
-
-      print("Data loaded from SharedPreferences");
-    } catch (e) {
-      print('Critical error loading data from SharedPreferences: $e');
-      // Continue with empty data - don't crash the app
+    final String? storedScreenshots = prefs.getString('screenshots');
+    if (storedScreenshots != null && storedScreenshots.isNotEmpty) {
+      final List<dynamic> decodedScreenshots = jsonDecode(storedScreenshots);
+      setState(() {
+        _screenshots.clear();
+        _screenshots.addAll(
+          decodedScreenshots.map(
+            (json) => Screenshot.fromJson(json as Map<String, dynamic>),
+          ),
+        );
+      });
     }
+
+    final String? storedCollections = prefs.getString('collections');
+    if (storedCollections != null && storedCollections.isNotEmpty) {
+      final List<dynamic> decodedCollections = jsonDecode(storedCollections);
+      setState(() {
+        _collections.clear();
+        _collections.addAll(
+          decodedCollections.map(
+            (json) => Collection.fromJson(json as Map<String, dynamic>),
+          ),
+        );
+      });
+    }
+    print("Data loaded from SharedPreferences");
   }
 
   Future<void> _loadSettings() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      setState(() {
-        _apiKey = prefs.getString('apiKey');
-        _selectedModelName = prefs.getString('modelName') ?? 'gemini-2.0-flash';
-        _screenshotLimit = prefs.getInt('limit') ?? 1200;
-        _maxParallelAI = prefs.getInt('maxParallel') ?? 4;
-        _devMode = prefs.getBool('dev_mode') ?? false;
-        _autoProcessEnabled = prefs.getBool('auto_process_enabled') ?? true;
-        _analyticsEnabled =
-            prefs.getBool('analytics_consent_enabled') ?? !kDebugMode;
-        _amoledModeEnabled = prefs.getBool('amoled_mode_enabled') ?? false;
-        _betaTestingEnabled = prefs.getBool('beta_testing_enabled') ?? false;
-        _selectedTheme = prefs.getString('selected_theme') ?? 'Adaptive Theme';
-      });
-    } catch (e) {
-      print('Failed to load settings: $e');
-      // Continue with default settings - don't crash the app
-      setState(() {
-        _selectedModelName = 'gemini-2.0-flash';
-        _screenshotLimit = 1200;
-        _maxParallelAI = 4;
-        _devMode = false;
-        _autoProcessEnabled = true;
-        _analyticsEnabled = !kDebugMode;
-        _amoledModeEnabled = false;
-        _betaTestingEnabled = false;
-        _selectedTheme = 'Adaptive Theme';
-      });
-    }
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _apiKey = prefs.getString('apiKey');
+      _selectedModelName = prefs.getString('modelName') ?? 'gemini-2.0-flash';
+      _screenshotLimit = prefs.getInt('limit') ?? 1200;
+      _maxParallelAI = prefs.getInt('maxParallel') ?? 4;
+      _devMode = prefs.getBool('dev_mode') ?? false;
+      _autoProcessEnabled = prefs.getBool('auto_process_enabled') ?? true;
+      _analyticsEnabled =
+          prefs.getBool('analytics_consent_enabled') ?? !kDebugMode;
+      _amoledModeEnabled = prefs.getBool('amoled_mode_enabled') ?? false;
+      _betaTestingEnabled = prefs.getBool('beta_testing_enabled') ?? false;
+      _selectedTheme = prefs.getString('selected_theme') ?? 'Adaptive Theme';
+    });
   }
 
   void _updateApiKey(String newApiKey) {
@@ -1348,24 +1159,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   /// Load Android screenshots only if we don't already have screenshots loaded from preferences
   Future<void> _loadAndroidScreenshotsIfNeeded() async {
-    try {
-      // Wait a bit for _loadDataFromPrefs to complete
-      await Future.delayed(const Duration(milliseconds: 100));
+    // Wait a bit for _loadDataFromPrefs to complete
+    await Future.delayed(const Duration(milliseconds: 100));
 
-      // Only load if we don't have screenshots already
-      if (_screenshots.isEmpty) {
-        print(
-          "No screenshots found in preferences, loading from Android device...",
-        );
-        await _loadAndroidScreenshots();
-      } else {
-        print(
-          "Screenshots already loaded from preferences (${_screenshots.length} screenshots)",
-        );
-      }
-    } catch (e) {
-      print('Error loading Android screenshots: $e');
-      // Continue without loading screenshots - don't crash the app
+    // Only load if we don't have screenshots already
+    if (_screenshots.isEmpty) {
+      print(
+        "No screenshots found in preferences, loading from Android device...",
+      );
+      await _loadAndroidScreenshots();
+    } else {
+      print(
+        "Screenshots already loaded from preferences (${_screenshots.length} screenshots)",
+      );
     }
   }
 
