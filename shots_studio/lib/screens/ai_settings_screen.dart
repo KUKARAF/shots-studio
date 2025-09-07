@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shots_studio/l10n/app_localizations.dart';
 import 'package:shots_studio/services/gemma_download_service.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 
 class AISettingsScreen extends StatefulWidget {
@@ -383,8 +384,73 @@ class _AISettingsScreenState extends State<AISettingsScreen> {
     return accepted ?? false;
   }
 
+  Future<void> _requestStoragePermissions() async {
+    try {
+      if (Platform.isAndroid) {
+        // Request storage permissions with user-friendly dialog
+        bool permissionGranted = false;
+
+        // Try different permissions based on Android version
+        var storageStatus = await Permission.storage.request();
+        if (storageStatus.isGranted) {
+          permissionGranted = true;
+        } else {
+          // Try manage external storage for newer Android versions
+          var manageStorageStatus =
+              await Permission.manageExternalStorage.request();
+          if (manageStorageStatus.isGranted) {
+            permissionGranted = true;
+          }
+        }
+
+        if (!permissionGranted && mounted) {
+          // Show dialog explaining why permissions are needed
+          await showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Storage Permission Required'),
+                content: const Text(
+                  'Storage permission is required to download and save the Gemma model file. '
+                  'Please grant storage access in your device settings to continue.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      openAppSettings(); // Open app settings
+                    },
+                    child: const Text('Open Settings'),
+                  ),
+                ],
+              );
+            },
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error requesting storage permissions: $e'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    }
+  }
+
   Future<String?> _selectDownloadLocation() async {
     try {
+      // Request storage permissions first on Android
+      if (Platform.isAndroid) {
+        await _requestStoragePermissions();
+      }
+
       // Get default downloads directory
       Directory? downloadsDir;
       if (Platform.isAndroid) {
@@ -416,7 +482,31 @@ class _AISettingsScreenState extends State<AISettingsScreen> {
   }
 
   Future<void> _downloadGemmaModel() async {
-    // First show terms and conditions
+    // First request storage permissions on Android
+    if (Platform.isAndroid) {
+      await _requestStoragePermissions();
+
+      // Verify permissions were granted before proceeding
+      final storageStatus = await Permission.storage.status;
+      final manageStorageStatus = await Permission.manageExternalStorage.status;
+
+      if (!storageStatus.isGranted && !manageStorageStatus.isGranted) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Storage permission is required to download the model. Please grant permission and try again.',
+              ),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 4),
+            ),
+          );
+        }
+        return;
+      }
+    }
+
+    // Show terms and conditions
     final termsAccepted = await _showTermsAndConditionsDialog();
     if (!termsAccepted) {
       return;
