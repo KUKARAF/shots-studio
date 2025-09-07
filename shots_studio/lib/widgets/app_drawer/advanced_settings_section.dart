@@ -382,34 +382,38 @@ class _AdvancedSettingsSectionState extends State<AdvancedSettingsSection> {
             ),
           ),
         ),
-        // Clear Corrupt Files Button
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-          child: SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () {
-                _clearCorruptFiles();
-              },
-              icon: Icon(
-                Icons.delete_sweep_outlined,
-                color: theme.colorScheme.error,
-              ),
-              label: Text(
-                AppLocalizations.of(context)?.clearCorruptFiles ??
-                    'Clear Corrupt Files',
-                style: TextStyle(color: theme.colorScheme.error),
-              ),
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: theme.colorScheme.error),
-                padding: const EdgeInsets.symmetric(vertical: 12.0),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+        // Clear Corrupt Files Button (only in debug mode)
+        if (kDebugMode)
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 4.0,
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  _clearCorruptFiles();
+                },
+                icon: Icon(
+                  Icons.delete_sweep_outlined,
+                  color: theme.colorScheme.error,
+                ),
+                label: Text(
+                  AppLocalizations.of(context)?.clearCorruptFiles ??
+                      'Clear Corrupt Files',
+                  style: TextStyle(color: theme.colorScheme.error),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: theme.colorScheme.error),
+                  padding: const EdgeInsets.symmetric(vertical: 12.0),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
         // Debug Notifications Button (only in debug mode)
         // Temporarily commented out - uncomment for debugging notification issues
         // if (kDebugMode)

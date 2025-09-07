@@ -96,15 +96,16 @@ class CorruptFileService {
   static void showNoCorruptFilesMessage(BuildContext context) {
     if (!context.mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          AppLocalizations.of(context)?.noCorruptFiles ??
-              'No corrupt files found',
-        ),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-      ),
-    );
+    // ScaffoldMessenger.of(context).showSnackBar(
+    //   SnackBar(
+    //     content: Text(
+    //       AppLocalizations.of(context)?.noCorruptFiles ??
+    //           'No corrupt files found',
+    //     ),
+    //     backgroundColor: Theme.of(context).colorScheme.primary,
+    //   ),
+    // );
+    print('No corrupt files found');
   }
 
   /// Mark corrupt screenshots as deleted and clear their collection references
@@ -162,5 +163,31 @@ class CorruptFileService {
     showSuccessMessage(context, deletedCount);
 
     return true;
+  }
+
+  /// Clear corrupt files silently without any dialogs or user interaction
+  /// This is used for background cleanup (e.g., file watcher startup)
+  /// Returns the number of files cleared
+  static int clearCorruptFilesSilently(
+    List<Screenshot>? allScreenshots,
+    VoidCallback? onFilesCleared,
+  ) {
+    final corruptScreenshots = getCorruptScreenshots(allScreenshots);
+
+    // No corrupt files found
+    if (corruptScreenshots.isEmpty) {
+      return 0;
+    }
+
+    // Track analytics for silent corrupt files cleanup
+    AnalyticsService().logFeatureUsed('corrupt_files_cleared_silent');
+
+    // Mark screenshots as deleted
+    final deletedCount = markCorruptScreenshotsAsDeleted(corruptScreenshots);
+
+    // Call the callback to handle global cleanup (save data, refresh UI, etc.)
+    onFilesCleared?.call();
+
+    return deletedCount;
   }
 }

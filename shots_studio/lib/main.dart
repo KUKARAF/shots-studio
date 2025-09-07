@@ -36,6 +36,7 @@ import 'package:shots_studio/utils/theme_manager.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shots_studio/services/image_loader_service.dart';
 import 'package:shots_studio/services/custom_path_service.dart';
+import 'package:shots_studio/services/corrupt_file_service.dart';
 import 'package:shots_studio/widgets/custom_paths_dialog.dart';
 import 'package:shots_studio/utils/build_source.dart';
 import 'package:shots_studio/utils/display_utils.dart';
@@ -1570,6 +1571,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
     _fileWatcher.syncWithExistingScreenshots(existingPaths);
 
+    // Clear corrupt files when setting up file watcher (async to not affect performance)
+    _clearCorruptFilesAsync();
+
     // Listen to new screenshots from file watcher
     _fileWatcherSubscription = _fileWatcher.newScreenshotsStream.listen(
       (newScreenshots) {
@@ -1665,10 +1669,47 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
       await _fileWatcher.startWatching();
 
+      // Clear corrupt files when file watcher starts (completely non-blocking)
+      _clearCorruptFilesAsync();
+
       print("FileWatcher: Async initialization completed successfully");
     } catch (e) {
       print("FileWatcher: Error during async initialization: $e");
     }
+  }
+
+  /// Clear all corrupt files from the app using the CorruptFileService
+  /// This runs asynchronously to not affect the file watcher performance
+  void _clearCorruptFilesAsync() {
+    // Fire and forget - run completely in background without blocking
+    Future.microtask(() {
+      try {
+        final clearedCount = CorruptFileService.clearCorruptFilesSilently(
+          _screenshots,
+          () {
+            // Callback when corrupt files are cleared - refresh the UI
+            if (mounted) {
+              setState(() {
+                // This will trigger a UI refresh after corrupt files are cleared
+              });
+              _saveDataToPrefs();
+            }
+          },
+        );
+        if (clearedCount > 0) {
+          print(
+            "FileWatcher: Silently cleared $clearedCount corrupt files in background",
+          );
+        } else {
+          print("FileWatcher: No corrupt files found during background check");
+        }
+      } catch (e) {
+        print("FileWatcher: Error during corrupt files clearing: $e");
+      }
+    });
+    print(
+      "FileWatcher: Corrupt files clearing started in background (non-blocking)",
+    );
   }
 
   /// Reset AI processing status for all screenshots
