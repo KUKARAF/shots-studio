@@ -96,7 +96,7 @@ class PostHogAnalyticsService {
     int screenshotCount,
   ) async {
     if (!_shouldLog()) return;
-
+    return;
     await Posthog().capture(
       eventName: 'batch_processing_time',
       properties: {
@@ -109,7 +109,7 @@ class PostHogAnalyticsService {
 
   Future<void> logAIProcessingSuccess(int screenshotCount) async {
     if (!_shouldLog()) return;
-
+    return;
     await Posthog().capture(
       eventName: 'ai_processing_success',
       properties: {'screenshot_count': screenshotCount},
@@ -212,6 +212,7 @@ class PostHogAnalyticsService {
   Future<void> logUserPath(String fromScreen, String toScreen) async {
     if (!_shouldLog()) return;
 
+    return;
     await Posthog().capture(
       eventName: 'user_path',
       properties: {'from_screen': fromScreen, 'to_screen': toScreen},
@@ -344,7 +345,7 @@ class PostHogAnalyticsService {
     int memoryUsageMB,
   ) async {
     if (!_shouldLog()) return;
-
+    return;
     await Posthog().capture(
       eventName: 'background_resource_usage',
       properties: {
@@ -357,7 +358,7 @@ class PostHogAnalyticsService {
   // App Health
   Future<void> logBatteryImpact(String level) async {
     if (!_shouldLog()) return;
-
+    return;
     await Posthog().capture(
       eventName: 'battery_impact',
       properties: {
@@ -368,7 +369,7 @@ class PostHogAnalyticsService {
 
   Future<void> logNetworkUsage(int bytesUsed, String operation) async {
     if (!_shouldLog()) return;
-
+    return;
     await Posthog().capture(
       eventName: 'network_usage',
       properties: {
@@ -384,7 +385,7 @@ class PostHogAnalyticsService {
     int durationMs,
   ) async {
     if (!_shouldLog()) return;
-
+    return;
     await Posthog().capture(
       eventName: 'background_task_completed',
       properties: {
@@ -520,6 +521,7 @@ class PostHogAnalyticsService {
   // Additional PostHog-specific methods
 
   // Identify a user (useful for authenticated users)
+  // TODO: Remove this if not used (privacy)
   Future<void> identifyUser(
     String userId, [
     Map<String, dynamic>? properties,

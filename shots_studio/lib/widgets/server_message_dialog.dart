@@ -74,7 +74,8 @@ class ServerMessageDialog extends StatelessWidget {
               Navigator.of(context).pop();
 
               // Handle action URL (primary) or update route (legacy fallback)
-              final urlToLaunch = messageInfo.actionUrl ?? messageInfo.updateRoute;
+              final urlToLaunch =
+                  messageInfo.actionUrl ?? messageInfo.updateRoute;
               if (urlToLaunch != null && urlToLaunch.isNotEmpty) {
                 await _launchUrl(urlToLaunch);
               }
@@ -154,7 +155,6 @@ class ServerMessageDialog extends StatelessWidget {
         }
 
         // Log analytics for message shown
-        AnalyticsService().logFeatureUsed('server_message_shown');
         AnalyticsService().logFeatureUsed('message_${messageInfo.id}_shown');
 
         // Show as notification or dialog based on message settings

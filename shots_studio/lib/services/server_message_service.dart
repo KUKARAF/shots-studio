@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shots_studio/services/notification_service.dart';
+import 'package:shots_studio/utils/build_source.dart';
 
 // TODO: Add don't show again functionality for messages
 
@@ -156,6 +157,10 @@ class ServerMessageService {
           continue;
         }
 
+        if (!_isPlatformTargeted(message.platform)) {
+          continue;
+        }
+
         if (!_isVersionTargeted(message.version, currentVersion)) {
           continue;
         }
@@ -208,6 +213,22 @@ class ServerMessageService {
     return false;
   }
 
+  static bool _isPlatformTargeted(String? targetPlatform) {
+    if (targetPlatform == null || targetPlatform.isEmpty) {
+      return true;
+    }
+
+    final target = targetPlatform.toLowerCase().trim();
+    final current = BuildSource.current.name.toLowerCase();
+
+    // Special case: "ALL" targets all platforms
+    if (target == 'all') {
+      return true;
+    }
+
+    return target == current;
+  }
+
   /// Marks a message as shown so it won't be displayed again (for show_once messages)
   static Future<void> markMessageAsShown(String messageId) async {
     final prefs = await SharedPreferences.getInstance();
@@ -258,6 +279,8 @@ class ServerMessageService {
       "beta_only": false,
       "action_text": "View Details",
       "dismiss_text": "Not Now",
+      "action_url": "https://example.com/notification-test",
+      "platform": "github", // Targeting only GitHub build
     };
 
     try {
@@ -308,6 +331,8 @@ class MessageInfo {
   final MessageActionType? actionType;
   final String? updateRoute; // Legacy field, use actionUrl instead
   final bool betaOnly;
+  final String?
+  platform; // New field to specify target platform (github/fdroid/playstore)
 
   MessageInfo({
     required this.show,
@@ -326,6 +351,7 @@ class MessageInfo {
     this.actionType,
     this.updateRoute,
     this.betaOnly = false,
+    this.platform,
   });
 
   factory MessageInfo.fromJson(Map<String, dynamic> json) {
@@ -349,6 +375,7 @@ class MessageInfo {
       actionType: _parseActionType(json['action_type']),
       updateRoute: json['update_route']?.toString(),
       betaOnly: json['beta_only'] ?? false,
+      platform: json['platform']?.toString(),
     );
   }
 

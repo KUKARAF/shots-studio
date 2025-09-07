@@ -20,6 +20,8 @@ class FileWatcherService {
   Timer? _debounceTimer;
   final Uuid _uuid = Uuid();
 
+  bool _isOperationInProgress = false;
+
   /// Stream of newly detected screenshots
   Stream<List<Screenshot>> get newScreenshotsStream {
     _newScreenshotsController ??=
@@ -41,9 +43,17 @@ class FileWatcherService {
       return; // Not supported on web
     }
 
-    print('FileWatcher: Starting file watching...');
+    // Prevent concurrent operations
+    if (_isOperationInProgress) {
+      print('FileWatcher: Operation already in progress, skipping');
+      return;
+    }
+
+    _isOperationInProgress = true;
 
     try {
+      print('FileWatcher: Starting file watching...');
+
       final screenshotPaths = await _getScreenshotPaths();
       print('FileWatcher: Found ${screenshotPaths.length} paths to watch');
 
@@ -93,17 +103,44 @@ class FileWatcherService {
       );
     } catch (e) {
       print('FileWatcher: Error starting watcher: $e');
+    } finally {
+      _isOperationInProgress = false;
     }
   }
 
   /// Stop monitoring file system
   Future<void> stopWatching() async {
-    for (final subscription in _subscriptions) {
-      await subscription.cancel();
+    // Prevent concurrent operations
+    if (_isOperationInProgress) {
+      print('FileWatcher: Stop operation already in progress, skipping');
+      return;
     }
-    _subscriptions.clear();
-    _debounceTimer?.cancel();
-    _processedFiles.clear();
+
+    _isOperationInProgress = true;
+
+    try {
+      // Create a copy of the subscriptions list to avoid concurrent modification
+      final subscriptionsToCancel = List<StreamSubscription>.from(
+        _subscriptions,
+      );
+
+      // Clear the original list immediately to prevent new additions
+      _subscriptions.clear();
+
+      // Cancel all subscriptions from the copy
+      for (final subscription in subscriptionsToCancel) {
+        try {
+          await subscription.cancel();
+        } catch (e) {
+          print('FileWatcher: Error canceling subscription: $e');
+        }
+      }
+
+      _debounceTimer?.cancel();
+      _processedFiles.clear();
+    } finally {
+      _isOperationInProgress = false;
+    }
   }
 
   /// Handle file system events with debouncing

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shots_studio/services/analytics/analytics_service.dart';
 import 'package:shots_studio/services/snackbar_service.dart';
 import 'package:shots_studio/utils/memory_utils.dart';
+import 'package:shots_studio/utils/display_utils.dart';
 
 class PerformanceMonitor extends StatefulWidget {
   const PerformanceMonitor({super.key});
@@ -86,6 +87,11 @@ class _PerformanceMonitorState extends State<PerformanceMonitor> {
               '${_cacheStats['pendingImageCount'] ?? 0}',
               Icons.hourglass_empty,
             ),
+            _buildStatCard(
+              'Display Refresh Rate',
+              '${DisplayUtils.getCurrentRefreshRate().toStringAsFixed(0)}Hz ${DisplayUtils.isHighRefreshRateEnabled ? '(Optimized)' : '(Standard)'}',
+              Icons.monitor,
+            ),
             const SizedBox(height: 24),
             Text(
               'Memory Management',
@@ -135,6 +141,7 @@ class _PerformanceMonitorState extends State<PerformanceMonitor> {
                       '• Lower screenshot limits (50-100) for better performance\n'
                       '• Clear image cache if app becomes slow\n'
                       '• Restart app if memory usage becomes high\n'
+                      '• High refresh rate displays (>60Hz) improve animation smoothness\n'
                       '• Consider deleting unused screenshots',
                       style: TextStyle(
                         color:

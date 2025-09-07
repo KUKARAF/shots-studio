@@ -21,15 +21,17 @@ class OCRService {
 
       // Handle different image sources
       if (screenshot.path != null) {
-        final file = File(screenshot.path!);
+        final filePath = screenshot.path!; // Safe since we checked above
+        final file = File(filePath);
         if (await file.exists()) {
-          imagePath = screenshot.path!;
+          imagePath = filePath;
         } else {
           throw Exception('Screenshot file not found');
         }
       } else if (screenshot.bytes != null) {
         // Create temporary file from bytes
-        imagePath = await _createTempFileFromBytes(screenshot.bytes!);
+        final bytes = screenshot.bytes!; // Safe since we checked above
+        imagePath = await _createTempFileFromBytes(bytes);
         isTemporaryFile = true;
       } else {
         throw Exception('No image data available');

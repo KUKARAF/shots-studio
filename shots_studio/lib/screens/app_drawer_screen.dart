@@ -4,6 +4,7 @@ import 'package:shots_studio/widgets/app_drawer/index.dart';
 import 'package:shots_studio/services/analytics/analytics_service.dart';
 import 'package:shots_studio/l10n/app_localizations.dart';
 import 'package:shots_studio/models/screenshot_model.dart';
+import 'package:shots_studio/screens/settings_screen.dart';
 
 class AppDrawer extends StatefulWidget {
   final String? currentApiKey;
@@ -20,12 +21,16 @@ class AppDrawer extends StatefulWidget {
   final Function(bool)? onAutoProcessEnabledChanged;
   final bool? currentAnalyticsEnabled;
   final Function(bool)? onAnalyticsEnabledChanged;
+  final bool? currentServerMessagesEnabled;
+  final Function(bool)? onServerMessagesEnabledChanged;
   final bool? currentBetaTestingEnabled;
   final Function(bool)? onBetaTestingEnabledChanged;
   final bool? currentAmoledModeEnabled;
   final Function(bool)? onAmoledModeChanged;
   final String? currentSelectedTheme;
   final Function(String)? onThemeChanged;
+  final bool? currentHardDeleteEnabled;
+  final Function(bool)? onHardDeleteChanged;
   final Key? apiKeyFieldKey;
   final VoidCallback? onResetAiProcessing;
   final Function(Locale)? onLocaleChanged;
@@ -48,12 +53,16 @@ class AppDrawer extends StatefulWidget {
     this.onAutoProcessEnabledChanged,
     this.currentAnalyticsEnabled,
     this.onAnalyticsEnabledChanged,
+    this.currentServerMessagesEnabled,
+    this.onServerMessagesEnabledChanged,
     this.currentBetaTestingEnabled,
     this.onBetaTestingEnabledChanged,
     this.currentAmoledModeEnabled,
     this.onAmoledModeChanged,
     this.currentSelectedTheme,
     this.onThemeChanged,
+    this.currentHardDeleteEnabled,
+    this.onHardDeleteChanged,
     this.apiKeyFieldKey,
     this.onResetAiProcessing,
     this.onLocaleChanged,
@@ -84,6 +93,51 @@ class _AppDrawerState extends State<AppDrawer> {
     setState(() {
       _appVersion = packageInfo.version;
     });
+  }
+
+  void _navigateToSettings() {
+    // Track analytics for settings navigation
+    AnalyticsService().logFeatureUsed('settings_navigation');
+    AnalyticsService().logScreenView('settings_screen');
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => SettingsScreen(
+              currentApiKey: widget.currentApiKey,
+              currentModelName: widget.currentModelName,
+              onApiKeyChanged: widget.onApiKeyChanged,
+              onModelChanged: widget.onModelChanged,
+              currentLimit: widget.currentLimit,
+              onLimitChanged: widget.onLimitChanged,
+              currentMaxParallel: widget.currentMaxParallel,
+              onMaxParallelChanged: widget.onMaxParallelChanged,
+              currentDevMode: widget.currentDevMode,
+              onDevModeChanged: widget.onDevModeChanged,
+              currentAutoProcessEnabled: widget.currentAutoProcessEnabled,
+              onAutoProcessEnabledChanged: widget.onAutoProcessEnabledChanged,
+              currentAnalyticsEnabled: widget.currentAnalyticsEnabled,
+              onAnalyticsEnabledChanged: widget.onAnalyticsEnabledChanged,
+              currentServerMessagesEnabled: widget.currentServerMessagesEnabled,
+              onServerMessagesEnabledChanged:
+                  widget.onServerMessagesEnabledChanged,
+              currentBetaTestingEnabled: widget.currentBetaTestingEnabled,
+              onBetaTestingEnabledChanged: widget.onBetaTestingEnabledChanged,
+              currentAmoledModeEnabled: widget.currentAmoledModeEnabled,
+              onAmoledModeChanged: widget.onAmoledModeChanged,
+              currentSelectedTheme: widget.currentSelectedTheme,
+              onThemeChanged: widget.onThemeChanged,
+              currentHardDeleteEnabled: widget.currentHardDeleteEnabled,
+              onHardDeleteChanged: widget.onHardDeleteChanged,
+              apiKeyFieldKey: widget.apiKeyFieldKey,
+              onResetAiProcessing: widget.onResetAiProcessing,
+              onLocaleChanged: widget.onLocaleChanged,
+              allScreenshots: widget.allScreenshots,
+              onClearCorruptFiles: widget.onClearCorruptFiles,
+            ),
+      ),
+    );
   }
 
   void _handleAboutTap() {
@@ -118,40 +172,37 @@ class _AppDrawerState extends State<AppDrawer> {
           padding: EdgeInsets.zero,
           children: [
             const AppDrawerHeader(),
-            SettingsSection(
+            QuickSettingsSection(
               currentApiKey: widget.currentApiKey,
               currentModelName: widget.currentModelName,
               onApiKeyChanged: widget.onApiKeyChanged,
               onModelChanged: widget.onModelChanged,
               apiKeyFieldKey: widget.apiKeyFieldKey,
-              currentAutoProcessEnabled: widget.currentAutoProcessEnabled,
-              onAutoProcessEnabledChanged: widget.onAutoProcessEnabledChanged,
-              currentAmoledModeEnabled: widget.currentAmoledModeEnabled,
-              onAmoledModeChanged: widget.onAmoledModeChanged,
-              currentSelectedTheme: widget.currentSelectedTheme,
-              onThemeChanged: widget.onThemeChanged,
-              currentDevMode: widget.currentDevMode,
-              onDevModeChanged: widget.onDevModeChanged,
-              onLocaleChanged: widget.onLocaleChanged,
             ),
-            if (widget.currentDevMode == true) ...[
-              AdvancedSettingsSection(
-                currentLimit: widget.currentLimit,
-                onLimitChanged: widget.onLimitChanged,
-                currentMaxParallel: widget.currentMaxParallel,
-                onMaxParallelChanged: widget.onMaxParallelChanged,
-                currentDevMode: widget.currentDevMode,
-                onDevModeChanged: widget.onDevModeChanged,
-                currentAnalyticsEnabled: widget.currentAnalyticsEnabled,
-                onAnalyticsEnabledChanged: widget.onAnalyticsEnabledChanged,
-                currentBetaTestingEnabled: widget.currentBetaTestingEnabled,
-                onBetaTestingEnabledChanged: widget.onBetaTestingEnabledChanged,
-                onResetAiProcessing: widget.onResetAiProcessing,
-                allScreenshots: widget.allScreenshots,
-                onClearCorruptFiles: widget.onClearCorruptFiles,
+            ListTile(
+              leading: Icon(Icons.settings, color: theme.colorScheme.primary),
+              title: Text(
+                AppLocalizations.of(context)?.settings ?? 'Settings',
+                style: TextStyle(
+                  color: theme.colorScheme.onSecondaryContainer,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-              const PerformanceSection(),
-            ],
+              subtitle: Text(
+                'Manage app preferences and settings',
+                style: TextStyle(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontSize: 13,
+                ),
+              ),
+              trailing: Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              onTap: _navigateToSettings,
+            ),
+            if (widget.currentDevMode == true) ...[const PerformanceSection()],
             AboutSection(
               appVersion: _appVersion,
               onTap: _handleAboutTap,
