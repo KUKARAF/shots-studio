@@ -253,7 +253,7 @@ class _SettingsSectionState extends State<SettingsSection> {
             style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
           ),
           value: _autoProcessEnabled,
-          activeColor: theme.colorScheme.primary,
+          activeThumbColor: theme.colorScheme.primary,
           onChanged: (bool value) {
             setState(() {
               _autoProcessEnabled = value;
@@ -289,7 +289,7 @@ class _SettingsSectionState extends State<SettingsSection> {
             style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
           ),
           value: _amoledModeEnabled,
-          activeColor: theme.colorScheme.primary,
+          activeThumbColor: theme.colorScheme.primary,
           onChanged: (bool value) {
             setState(() {
               _amoledModeEnabled = value;
@@ -543,6 +543,15 @@ class _SettingsSectionState extends State<SettingsSection> {
                             ],
                           ),
                         ),
+                        DropdownMenuItem(
+                          value: 'pl',
+                          child: Row(
+                            children: [
+                              SizedBox(width: 8),
+                              Text('Polski (Polish)'),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -565,7 +574,7 @@ class _SettingsSectionState extends State<SettingsSection> {
             style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
           ),
           value: _safeDeleteEnabled,
-          activeColor: theme.colorScheme.primary,
+          activeThumbColor: theme.colorScheme.primary,
           onChanged: (bool value) async {
             if (!value) {
               // Show warning dialog when disabling safe delete
@@ -608,7 +617,7 @@ class _SettingsSectionState extends State<SettingsSection> {
             style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
           ),
           value: _devMode,
-          activeColor: theme.colorScheme.primary,
+          activeThumbColor: theme.colorScheme.primary,
           onChanged: (bool value) {
             setState(() {
               _devMode = value;

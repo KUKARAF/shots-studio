@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shots_studio/widgets/home_app_bar.dart';
 import 'package:shots_studio/widgets/collections/collections_section.dart';
 import 'package:shots_studio/widgets/screenshots/screenshots_section.dart';
+import 'package:shots_studio/widgets/expandable_fab.dart';
 import 'package:shots_studio/screens/app_drawer_screen.dart';
 import 'package:shots_studio/models/screenshot_model.dart';
 import 'package:shots_studio/models/collection_model.dart';
@@ -191,6 +192,7 @@ class _MyAppState extends State<MyApp> {
             Locale('fr'), // French
             Locale('it'), // Italian
             Locale('ja'), // Japanese
+            Locale('pl'), // Polish
             Locale('ru'), // Russian
           ],
           locale: _selectedLocale, // Use the selected locale
@@ -269,7 +271,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _devMode = false;
   bool _autoProcessEnabled = true;
   bool _analyticsEnabled =
-      !kDebugMode; // Default to false in debug mode, true in production
+      false; // Default to false for privacy - analytics is opt-in only
   bool _amoledModeEnabled = false;
   bool _betaTestingEnabled = false;
   String _selectedTheme = 'Adaptive Theme';
@@ -1030,9 +1032,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         await _processWithGemini();
       } else {
         print("Main app: No unprocessed screenshots to restart processing");
-        AnalyticsService().logFeatureUsed(
-          'auto_add_processing_restart_no_screenshots',
-        );
       }
     } catch (e) {
       print(
@@ -1538,9 +1537,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Future<void> _autoProcessWithGemini() async {
     // Only auto-process if enabled, we have an API key, we're not already processing,
     if (_autoProcessEnabled &&
-            !_isProcessingAI &&
-            ((_apiKey != null && _apiKey!.isNotEmpty)) ||
-        (_selectedModelName == 'gemma')) {
+        !_isProcessingAI &&
+        ((_apiKey != null && _apiKey!.isNotEmpty) ||
+            _selectedModelName == 'gemma')) {
       // Check if there are any unprocessed screenshots
       final unprocessedScreenshots =
           _activeScreenshots.where((s) => !s.aiProcessed).toList();
@@ -1857,101 +1856,60 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         allScreenshots: _screenshots,
         onClearCorruptFiles: _clearCorruptFiles,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Track FAB pressed
-          AnalyticsService().logFeatureUsed('fab_pressed');
-
-          // Show options for selecting screenshots
-          showModalBottomSheet(
-            context: context,
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      floatingActionButton: ExpandableFab(
+        distance: 80,
+        actions: [
+          ExpandableFabAction(
+            icon: Icons.photo_library,
+            label: 'Gallery',
+            onPressed: () {
+              // Track gallery selection
+              AnalyticsService().logFeatureUsed('fab_gallery_selected');
+              _takeScreenshot(ImageSource.gallery);
+            },
+          ),
+          if (!kIsWeb) // Camera option only for mobile
+            ExpandableFabAction(
+              icon: Icons.camera_alt,
+              label: 'Camera',
+              onPressed: () {
+                // Track camera selection
+                AnalyticsService().logFeatureUsed('fab_camera_selected');
+                _takeScreenshot(ImageSource.camera);
+              },
             ),
-            builder:
-                (context) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 20.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ListTile(
-                        leading: const Icon(Icons.photo_library),
-                        title: const Text('Select from gallery'),
-                        onTap: () {
-                          // Track gallery selection
-                          AnalyticsService().logFeatureUsed(
-                            'fab_gallery_selected',
-                          );
-
-                          Navigator.pop(context);
-                          _takeScreenshot(ImageSource.gallery);
-                        },
-                      ),
-                      if (!kIsWeb) // Camera option only for mobile
-                        ListTile(
-                          leading: const Icon(Icons.camera_alt),
-                          title: const Text('Take a photo'),
-                          onTap: () {
-                            // Track camera selection
-                            AnalyticsService().logFeatureUsed(
-                              'fab_camera_selected',
-                            );
-
-                            Navigator.pop(context);
-                            _takeScreenshot(ImageSource.camera);
-                          },
-                        ),
-                      if (!kIsWeb) // Android screenshot loading option
-                        ListTile(
-                          leading: const Icon(Icons.folder_open),
-                          title: const Text('Load device screenshots'),
-                          onTap: () {
-                            // Track load device screenshots
-                            AnalyticsService().logFeatureUsed(
-                              'fab_load_device_screenshots',
-                            );
-
-                            Navigator.pop(context);
-                            _loadAndroidScreenshots(forceReload: true).then((
-                              _,
-                            ) {
-                              // Re-sync FileWatcher with newly loaded screenshots
-                              final existingPaths =
-                                  _screenshots
-                                      .map((s) => s.path)
-                                      .whereType<String>()
-                                      .toList();
-                              _fileWatcher.syncWithExistingScreenshots(
-                                existingPaths,
-                              );
-                            });
-                          },
-                        ),
-                      if (!kIsWeb) // Custom paths management
-                        ListTile(
-                          leading: const Icon(Icons.create_new_folder),
-                          title: const Text('Manage custom paths'),
-                          onTap: () {
-                            // Track custom paths management
-                            AnalyticsService().logFeatureUsed(
-                              'fab_manage_custom_paths',
-                            );
-
-                            Navigator.pop(context);
-                            _showCustomPathsDialog();
-                          },
-                        ),
-                    ],
-                  ),
-                ),
-          );
-        },
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        child: Icon(
-          Icons.add_a_photo,
-          color: Theme.of(context).colorScheme.onPrimary,
-        ),
+          if (!kIsWeb) // Android screenshot loading option
+            ExpandableFabAction(
+              icon: Icons.folder_open,
+              label: 'Load Screenshots',
+              onPressed: () {
+                // Track load device screenshots
+                AnalyticsService().logFeatureUsed(
+                  'fab_load_device_screenshots',
+                );
+                _loadAndroidScreenshots(forceReload: true).then((_) {
+                  // Re-sync FileWatcher with newly loaded screenshots
+                  final existingPaths =
+                      _screenshots
+                          .map((s) => s.path)
+                          .whereType<String>()
+                          .toList();
+                  _fileWatcher.syncWithExistingScreenshots(existingPaths);
+                });
+              },
+            ),
+          if (!kIsWeb) // Custom paths management
+            ExpandableFabAction(
+              icon: Icons.create_new_folder,
+              label: 'Custom Paths',
+              onPressed: () {
+                // Track custom paths management
+                AnalyticsService().logFeatureUsed('fab_manage_custom_paths');
+                _showCustomPathsDialog();
+              },
+            ),
+        ],
+        child: const Icon(Icons.add_a_photo),
       ),
       body:
           _isLoading
