@@ -34,7 +34,7 @@ class TaskerIntegrationService {
     return broadcastEvent(eventTypeScreenshotAdded, {
       'screenshot_id': screenshotId,
       'title': title ?? '',
-      'tags': tags?.join(',') ?? '',
+      'tags': tags ?? [],
       'path': path ?? '',
       'timestamp': DateTime.now().millisecondsSinceEpoch,
     });
@@ -50,7 +50,7 @@ class TaskerIntegrationService {
     return broadcastEvent(eventTypeScreenshotTagged, {
       'screenshot_id': screenshotId,
       'new_tag': newTag,
-      'all_tags': allTags?.join(',') ?? '',
+      'all_tags': allTags ?? [],
       'title': title ?? '',
       'timestamp': DateTime.now().millisecondsSinceEpoch,
     });

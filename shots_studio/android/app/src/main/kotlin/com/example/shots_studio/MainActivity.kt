@@ -117,10 +117,11 @@ class MainActivity : FlutterActivity() {
     }
     
     private fun broadcastTaskerEvent(eventType: String, eventData: Map<String, Any?>) {
+        // Broadcast intent that Tasker can receive
         val intent = Intent("com.shotsstudio.TASKER_EVENT").apply {
-            `package` = "net.dinglisch.android.taskerm"
-            putExtra("event_type", eventType)
+            // Don't restrict to Tasker package - let any app receive it
             // Add all event data as extras
+            putExtra("event_type", eventType)
             eventData.forEach { (key, value) ->
                 when (value) {
                     is String -> putExtra(key, value)
@@ -129,10 +130,13 @@ class MainActivity : FlutterActivity() {
                     is Boolean -> putExtra(key, value)
                     is Double -> putExtra(key, value)
                     is Float -> putExtra(key, value)
+                    // For lists, convert to comma-separated string
+                    is List<*> -> putExtra(key, value.joinToString(","))
                     // Add other types as needed
                 }
             }
         }
+        // Send as broadcast that Tasker can receive
         sendBroadcast(intent)
     }
 }

@@ -117,7 +117,5 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="http" />
         </intent>
-        <!-- Query for Tasker to allow sending intents to it -->
-        <package android:name="net.dinglisch.android.taskerm" />
     </queries>
 </manifest>
