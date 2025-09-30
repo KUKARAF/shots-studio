@@ -11,6 +11,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
     <!-- Additional permissions for better notification delivery -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- Permission for sending broadcast intents -->
+    <uses-permission android:name="android.permission.BROADCAST_STICKY" />
     <!-- <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/> -->
 
 
@@ -115,5 +117,7 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="http" />
         </intent>
+        <!-- Query for Tasker to allow sending intents to it -->
+        <package android:name="net.dinglisch.android.taskerm" />
     </queries>
 </manifest>

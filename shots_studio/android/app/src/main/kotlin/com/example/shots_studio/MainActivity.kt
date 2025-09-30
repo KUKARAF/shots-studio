@@ -13,6 +13,7 @@ import java.io.File
 
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "update_installer"
+    private val TASKER_CHANNEL = "tasker_integration"
     private val INSTALL_REQUEST_CODE = 1001
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -38,6 +39,29 @@ class MainActivity : FlutterActivity() {
                         }
                     } else {
                         result.error("INVALID_ARGUMENT", "APK path is required", null)
+                    }
+                }
+                else -> {
+                    result.notImplemented()
+                }
+            }
+        }
+        
+        // Tasker integration channel
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, TASKER_CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "broadcastScreenshotEvent" -> {
+                    val eventType = call.argument<String>("eventType")
+                    val eventData = call.argument<Map<String, Any?>>("eventData")
+                    if (eventType != null && eventData != null) {
+                        try {
+                            broadcastTaskerEvent(eventType, eventData)
+                            result.success(true)
+                        } catch (e: Exception) {
+                            result.error("BROADCAST_ERROR", e.message, null)
+                        }
+                    } else {
+                        result.error("INVALID_ARGUMENT", "Event type and data are required", null)
                     }
                 }
                 else -> {
@@ -90,5 +114,25 @@ class MainActivity : FlutterActivity() {
         }
 
         startActivity(intent)
+    }
+    
+    private fun broadcastTaskerEvent(eventType: String, eventData: Map<String, Any?>) {
+        val intent = Intent("com.shotsstudio.TASKER_EVENT").apply {
+            `package` = "net.dinglisch.android.taskerm"
+            putExtra("event_type", eventType)
+            // Add all event data as extras
+            eventData.forEach { (key, value) ->
+                when (value) {
+                    is String -> putExtra(key, value)
+                    is Int -> putExtra(key, value)
+                    is Long -> putExtra(key, value)
+                    is Boolean -> putExtra(key, value)
+                    is Double -> putExtra(key, value)
+                    is Float -> putExtra(key, value)
+                    // Add other types as needed
+                }
+            }
+        }
+        sendBroadcast(intent)
     }
 }
