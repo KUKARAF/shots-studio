@@ -1,0 +1,76 @@
+name: Build and Release APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "shots_studio/**"
+      - ".github/workflows/build_and_release.yml"
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.32.4"
+          channel: "stable"
+
+      - name: Get dependencies
+        run: flutter pub get
+        working-directory: shots_studio
+
+      - name: Run tests
+        run: flutter test
+        working-directory: shots_studio
+
+      - name: Build APK
+        run: flutter build apk --release
+        working-directory: shots_studio
+
+      - name: Get version from pubspec.yaml
+        id: get_version
+        run: |
+          VERSION=$(grep '^version:' shots_studio/pubspec.yaml | cut -d ' '
+-f 2 | cut -d '+' -f 1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.get_version.outputs.version }}
+          release_name: Release v${{ steps.get_version.outputs.version }}
+          body: |
+            Automated release of version ${{
+steps.get_version.outputs.version }}
+
+            ## Changes
+            - Built from commit ${{ github.sha }}
+          draft: false
+          prerelease: false
+
+      - name: Upload APK to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path:
+shots_studio/build/app/outputs/flutter-apk/app-release.apk
+          asset_name: shots-studio-v${{ steps.get_version.outputs.version
+}}.apk
+          asset_content_type: application/vnd.android.package-archive
